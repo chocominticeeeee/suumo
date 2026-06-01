@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>札幌 賃貸物件比較</title>
+        <style>
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", sans-serif;
+                background: #f5f6fa;
+                color: #333;
+                padding: 24px;
+            }
+
+            h1 {
+                font-size: 1.4rem;
+                margin-bottom: 16px;
+                color: #1a1a2e;
+            }
+
+            .controls {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 12px;
+                margin-bottom: 20px;
+                align-items: center;
+            }
+
+            .controls label {
+                font-size: 0.85rem;
+                color: #555;
+            }
+
+            .controls select,
+            .controls input {
+                padding: 6px 10px;
+                border: 1px solid #ccc;
+                border-radius: 6px;
+                font-size: 0.9rem;
+                background: #fff;
+            }
+
+            .controls button {
+                padding: 6px 14px;
+                background: #4a90d9;
+                color: #fff;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 0.85rem;
+            }
+
+            .controls button:hover {
+                background: #357abd;
+            }
+
+            .count {
+                font-size: 0.85rem;
+                color: #777;
+                margin-left: auto;
+            }
+
+            .table-wrap {
+                overflow-x: auto;
+                border-radius: 10px;
+                box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            }
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                background: #fff;
+                font-size: 0.88rem;
+                min-width: 1000px;
+            }
+
+            thead th {
+                background: #1a1a2e;
+                color: #fff;
+                padding: 10px 12px;
+                text-align: left;
+                white-space: nowrap;
+                cursor: pointer;
+                user-select: none;
+                position: sticky;
+                top: 0;
+            }
+
+            thead th:hover {
+                background: #2d2d50;
+            }
+
+            thead th .sort-icon {
+                margin-left: 4px;
+                opacity: 0.5;
+            }
+            thead th.asc .sort-icon::after {
+                content: " ▲";
+                opacity: 1;
+            }
+            thead th.desc .sort-icon::after {
+                content: " ▼";
+                opacity: 1;
+            }
+
+            tbody tr:nth-child(even) {
+                background: #f9f9fb;
+            }
+            tbody tr:hover {
+                background: #e8f0fc;
+            }
+
+            td {
+                padding: 9px 12px;
+                border-bottom: 1px solid #eee;
+                white-space: nowrap;
+                vertical-align: middle;
+            }
+
+            td.name-cell {
+                white-space: normal;
+                min-width: 130px;
+            }
+
+            td.name-cell a {
+                color: #4a90d9;
+                text-decoration: none;
+                font-weight: 600;
+            }
+            td.name-cell a:hover {
+                text-decoration: underline;
+            }
+
+            .badge {
+                display: inline-block;
+                padding: 2px 7px;
+                border-radius: 4px;
+                font-size: 0.75rem;
+                font-weight: 600;
+            }
+
+            .badge-ok {
+                background: #d4edda;
+                color: #1a6630;
+            }
+            .badge-no {
+                background: #f0f0f0;
+                color: #999;
+            }
+            .badge-ac {
+                background: #cce5ff;
+                color: #004085;
+            }
+            .badge-now {
+                background: #fff3cd;
+                color: #856404;
+            }
+
+            .monthly-high {
+                color: #c0392b;
+                font-weight: 700;
+            }
+            .monthly-low {
+                color: #27ae60;
+                font-weight: 700;
+            }
+            .monthly-mid {
+                font-weight: 600;
+            }
+
+            .note {
+                font-size: 0.75rem;
+                color: #888;
+                margin-top: 2px;
+            }
+
+            .hidden {
+                display: none;
+            }
+
+            .score-input {
+                width: 52px;
+                text-align: center;
+                padding: 4px 2px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                font-size: 0.9rem;
+            }
+
+            .memo-input {
+                width: 180px;
+                padding: 4px 6px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                font-size: 0.82rem;
+            }
+
+            td.memo-cell {
+                white-space: normal;
+                min-width: 120px;
+            }
+
+            .legend {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-bottom: 14px;
+                font-size: 0.8rem;
+            }
+
+            .legend span {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+            td.osusume-cell {
+                white-space: normal;
+                min-width: 150px;
+            }
+            .rank {
+                display: inline-block;
+                font-weight: 700;
+                font-size: 0.95rem;
+                white-space: nowrap;
+            }
+            .rank-top {
+                color: #c0392b;
+            }
+            .rank-mid {
+                color: #d68910;
+            }
+            .rank-low {
+                color: #888;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>🏠 札幌 賃貸物件比較（駐車場付き）</h1>
+
+        <div class="legend">
+            <span><span class="badge badge-ok">◯</span> あり / 可</span>
+            <span><span class="badge badge-no">－</span> 記載なし</span>
+            <span><span class="badge badge-ac">AC</span> エアコンあり</span>
+            <span><span class="badge badge-now">即</span> 即入居可</span>
+        </div>
+
+        <div class="controls">
+            <label>絞り込み：</label>
+
+            <select id="filterAC">
+                <option value="">エアコン：すべて</option>
+                <option value="1">あり</option>
+                <option value="0">記載なし</option>
+            </select>
+
+            <select id="filterPet">
+                <option value="">ペット：すべて</option>
+                <option value="1">相談可</option>
+                <option value="0">記載なし</option>
+            </select>
+
+            <select id="filterKouzou">
+                <option value="">構造：すべて</option>
+                <option value="RC">RC（鉄筋コンクリート）</option>
+                <option value="木造">木造</option>
+                <option value="軽鉄">軽量鉄骨</option>
+            </select>
+
+            <button onclick="resetFilters()">リセット</button>
+
+            <span class="count" id="countLabel"></span>
+        </div>
+
+        <div class="table-wrap">
+            <table id="mainTable">
+                <thead>
+                    <tr>
+                        <th data-col="osusume">総合おすすめ<span class="sort-icon"></span></th>
+                        <th data-col="name">物件名<span class="sort-icon"></span></th>
+                        <th data-col="monthly">月額合計<span class="sort-icon"></span></th>
+                        <th data-col="chikunen">築年数<span class="sort-icon"></span></th>
+                        <th data-col="madori">間取り<span class="sort-icon"></span></th>
+                        <th data-col="menseki">専有面積<span class="sort-icon"></span></th>
+                        <th data-col="floor">階数<span class="sort-icon"></span></th>
+                        <th data-col="kouzou">構造<span class="sort-icon"></span></th>
+                        <th data-col="ac">AC<span class="sort-icon"></span></th>
+                        <th data-col="pet">ペット<span class="sort-icon"></span></th>
+                        <th data-col="nyukyo">入居時期<span class="sort-icon"></span></th>
+                        <th data-col="distance">中心距離<span class="sort-icon"></span></th>
+                        <th data-col="shoki">初期費用概算<span class="sort-icon"></span></th>
+                        <th data-col="trunk">トランク<span class="sort-icon"></span></th>
+                        <th data-col="score">点数<span class="sort-icon"></span></th>
+                        <th>備考</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+
+        <p style="margin-top: 12px; font-size: 0.78rem; color: #999">
+            ※ 中心距離は大通駅（札幌市中心部）からの直線距離の概算です。セルにカーソルを当てると住所が表示されます。
+        </p>
+
+        <script>
+            const 除外物件 = ["エクセランＳ２５", "Ｌ・Ａ平岸", "ARDEN", "ＢｅｅＬｉｎｅ"];
+            const properties = [
+                {
+                    name: "ドリームハイツ",
+                    url: "https://suumo.jp/chintai/bc_100508960299/",
+                    monthly: 41000,
+                    rent: 36000,
+                    kanrihi: 0,
+                    parking: 5000,
+                    chikunen: 28,
+                    chiku_label: "築28年（1999年）",
+                    madori: "1DK",
+                    menseki: 29.16,
+                    floor: 1,
+                    floor_label: "1F/2F",
+                    kouzou: "木造",
+                    ac: 0,
+                    pet: 0,
+                    nyukyo: "即",
+                    nyukyo_sort: 0,
+                    shoki: 111000,
+                    shoki_label: "約11.1万（前家賃3.6+敷3.6+清掃2.2+損保1.7）",
+                    trunk: 0,
+                    distance: 3.0,
+                    address: "北区北26条西2",
+                    note: "",
+                    osusume: 9,
+                    osusume_reason: "最安だが築28年・1F・木造・設備なし",
+                },
+                {
+                    name: "アズーリ中の島参番館",
+                    url: "https://suumo.jp/chintai/bc_100493295872/",
+                    monthly: 44800,
+                    rent: 35000,
+                    kanrihi: 1000,
+                    parking: 8800,
+                    chikunen: 23,
+                    chiku_label: "築23年（2004年）",
+                    madori: "1LDK",
+                    menseki: 25.43,
+                    floor: 3,
+                    floor_label: "3F/3F",
+                    kouzou: "木造",
+                    ac: 0,
+                    pet: 0,
+                    nyukyo: "相談",
+                    nyukyo_sort: 2,
+                    shoki: 55000,
+                    shoki_label: "約5.5万（前家賃3.5+損保2）",
+                    trunk: 0,
+                    distance: 2.5,
+                    address: "豊平区中の島1条6",
+                    note: "",
+                    osusume: 2,
+                    osusume_reason: "月額/初期費用が最安級・中心2.5km。ただし25㎡と最狭",
+                },
+                {
+                    name: "ラ・フレール",
+                    url: "https://suumo.jp/chintai/bc_100507469250/",
+                    monthly: 51500,
+                    rent: 43000,
+                    kanrihi: 3000,
+                    parking: 5500,
+                    chikunen: 29,
+                    chiku_label: "築29年（1998年）",
+                    madori: "1LDK",
+                    menseki: 27.74,
+                    floor: 2,
+                    floor_label: "2F/4F",
+                    kouzou: "RC",
+                    ac: 1,
+                    pet: 1,
+                    nyukyo: "6月中旬",
+                    nyukyo_sort: 3,
+                    shoki: 113000,
+                    shoki_label: "約11.3万（前家賃4.3+敷4.3+消毒2.75）※ペット時+4.3万",
+                    trunk: 0,
+                    distance: 1.5,
+                    address: "豊平区水車町1",
+                    note: "",
+                    osusume: 3,
+                    osusume_reason: "唯一エアコン付・RC・ペット可・中心1.5km。築29年で狭め",
+                },
+                {
+                    name: "ＰＩＮＯ参番館",
+                    url: "https://suumo.jp/chintai/bc_100508498236/",
+                    monthly: 52950,
+                    rent: 48000,
+                    kanrihi: 1650,
+                    parking: 3300,
+                    chikunen: 25,
+                    chiku_label: "築25年（2002年）",
+                    madori: "1LDK",
+                    menseki: 38.51,
+                    floor: 1,
+                    floor_label: "1F/2F",
+                    kouzou: "木造",
+                    ac: 0,
+                    pet: 1,
+                    nyukyo: "即",
+                    nyukyo_sort: 0,
+                    shoki: 103000,
+                    shoki_label: "約10.3万（前家賃4.8+敷礼なし・消毒3.3+鍵2.2）",
+                    trunk: 0,
+                    distance: 6.5,
+                    address: "北区新川2条5",
+                    note: "管理費は24時間管理費1,650円/月",
+                    osusume: 4,
+                    osusume_reason: "38㎡と広め・ペット可・即入居・敷礼なし。中心6.5kmと遠め",
+                },
+                {
+                    name: "ロイヤルコート",
+                    url: "https://suumo.jp/chintai/bc_100499025633/",
+                    monthly: 53500,
+                    rent: 45000,
+                    kanrihi: 3000,
+                    parking: 5500,
+                    chikunen: 23,
+                    chiku_label: "築23年（2003年）",
+                    madori: "1LDK",
+                    menseki: 41.6,
+                    floor: 2,
+                    floor_label: "2F/2F",
+                    kouzou: "軽鉄",
+                    ac: 0,
+                    pet: 0,
+                    nyukyo: "相談",
+                    nyukyo_sort: 2,
+                    shoki: 100000,
+                    shoki_label: "約10万（前家賃4.5+清掃3.3+ストーブ清掃2.2）",
+                    trunk: 0,
+                    distance: 7.0,
+                    address: "東区北37条東22",
+                    note: "",
+                    osusume: 7,
+                    osusume_reason: "41㎡と広めだが軽量鉄骨・中心7.0kmと遠い",
+                },
+                {
+                    name: "グランメールアイン",
+                    url: "https://suumo.jp/chintai/bc_100508502900/",
+                    monthly: 54800,
+                    rent: 43000,
+                    kanrihi: 3000,
+                    parking: 8800,
+                    chikunen: 19,
+                    chiku_label: "築19年（2008年）",
+                    madori: "1LDK",
+                    menseki: 37.29,
+                    floor: 3,
+                    floor_label: "3F/4F",
+                    kouzou: "RC",
+                    ac: 0,
+                    pet: 1,
+                    nyukyo: "相談",
+                    nyukyo_sort: 2,
+                    shoki: 93000,
+                    shoki_label: "約9.3万（前家賃4.3+鍵2.2+清掃2.75）",
+                    trunk: 0,
+                    distance: 2.5,
+                    address: "白石区菊水上町1条1",
+                    note: "最も新しい（築19年）",
+                    osusume: 1,
+                    osusume_reason: "築19年で最新・RC・中心2.5km・ペット可・初期費用安。総合力No.1",
+                },
+
+                {
+                    name: "メゾンルミエール",
+                    url: "https://suumo.jp/chintai/bc_100459208492/",
+                    monthly: 50000,
+                    rent: 50000,
+                    kanrihi: 0,
+                    parking: 0,
+                    chikunen: 26,
+                    chiku_label: "築26年（2000年）",
+                    madori: "2LDK",
+                    menseki: 48.2,
+                    floor: 1,
+                    floor_label: "1F/2F",
+                    kouzou: "木造",
+                    ac: 0,
+                    pet: 0,
+                    nyukyo: "即",
+                    nyukyo_sort: 0,
+                    shoki: 115000,
+                    shoki_label: "約11.5万（前家賃5+敷5+損保1.5）",
+                    trunk: 0,
+                    distance: 7.5,
+                    address: "北区新琴似5条12",
+                    note: "駐車場無料・2LDK広め（洋6+洋6+LDK11）。エアコン記載なし",
+                    osusume: 6,
+                    osusume_reason: "2LDK 48㎡で最広・駐車場無料。中心7.5kmと最遠・木造1F",
+                },
+                {
+                    name: "ベルファーレ中央",
+                    url: "https://suumo.jp/chintai/bc_100505802820/",
+                    monthly: 54700,
+                    rent: 47000,
+                    kanrihi: 3000,
+                    parking: 3300,
+                    chikunen: 25,
+                    chiku_label: "築25年（2001年）",
+                    madori: "1LDK",
+                    menseki: 46.0,
+                    floor: 1,
+                    floor_label: "1F/4F",
+                    kouzou: "軽鉄",
+                    ac: 0,
+                    pet: 0,
+                    nyukyo: "6月下旬",
+                    nyukyo_sort: 4,
+                    shoki: 110000,
+                    shoki_label: "約11万（前家賃4.7+消毒2.2+損保1.6+保証2.5）",
+                    trunk: 0,
+                    distance: 1.5,
+                    address: "中央区南8条西13",
+                    note: "鉄骨造。管理費に別途24時間管理1,100+町内会費300含む。中心部に近い",
+                    osusume: 8,
+                    osusume_reason: "中心1.5km・46㎡と広め。軽量鉄骨1F・入居6月下旬",
+                },
+            ].filter((prop) => {
+                return !除外物件.includes(prop.name);
+            });
+
+            let sortCol = "osusume";
+            let sortAsc = true;
+            let data = [...properties];
+
+            const LS_SCORES = "suumo_scores";
+            const LS_MEMOS = "suumo_memos";
+            const scores = JSON.parse(localStorage.getItem(LS_SCORES) ?? "{}");
+            const memos = JSON.parse(localStorage.getItem(LS_MEMOS) ?? "{}");
+
+            function saveScore(name, val) {
+                scores[name] = val ? Number(val) : null;
+                localStorage.setItem(LS_SCORES, JSON.stringify(scores));
+            }
+            function saveMemo(name, val) {
+                memos[name] = val;
+                localStorage.setItem(LS_MEMOS, JSON.stringify(memos));
+            }
+
+            function fmt(n) {
+                return n.toLocaleString() + "円";
+            }
+
+            function monthlyClass(v) {
+                if (v <= 45000) return "monthly-low";
+                if (v >= 56000) return "monthly-high";
+                return "monthly-mid";
+            }
+
+            function osusumeCell(p) {
+                const medals = { 1: "🥇", 2: "🥈", 3: "🥉" };
+                const cls = p.osusume <= 3 ? "rank-top" : p.osusume <= 6 ? "rank-mid" : "rank-low";
+                const label = medals[p.osusume] ?? "";
+                return `<span class="rank ${cls}">${label} ${p.osusume}位</span>
+        <div class="note">${p.osusume_reason}</div>`;
+            }
+
+            function badge(v, trueLabel, falseLabel, trueClass, falseClass) {
+                return v
+                    ? `<span class="badge ${trueClass}">${trueLabel}</span>`
+                    : `<span class="badge ${falseClass}">${falseLabel}</span>`;
+            }
+
+            function render() {
+                const tbody = document.getElementById("tableBody");
+                const acFilter = document.getElementById("filterAC").value;
+                const petFilter = document.getElementById("filterPet").value;
+                const kouzouFilter = document.getElementById("filterKouzou").value;
+
+                let filtered = data.filter((p) => {
+                    if (acFilter !== "" && p.ac !== Number(acFilter)) return false;
+                    if (petFilter !== "" && p.pet !== Number(petFilter)) return false;
+                    if (kouzouFilter !== "") {
+                        if (kouzouFilter === "RC" && p.kouzou !== "RC") return false;
+                        if (kouzouFilter === "木造" && p.kouzou !== "木造") return false;
+                        if (kouzouFilter === "軽鉄" && p.kouzou !== "軽鉄") return false;
+                    }
+                    return true;
+                });
+
+                filtered.sort((a, b) => {
+                    let va, vb;
+                    if (sortCol === "score") {
+                        va = scores[a.name] ?? -1;
+                        vb = scores[b.name] ?? -1;
+                    } else {
+                        va = a[sortCol];
+                        vb = b[sortCol];
+                        if (typeof va === "string") va = va.toLowerCase();
+                        if (typeof vb === "string") vb = vb.toLowerCase();
+                    }
+                    if (va < vb) return sortAsc ? -1 : 1;
+                    if (va > vb) return sortAsc ? 1 : -1;
+                    return 0;
+                });
+
+                document.getElementById("countLabel").textContent = `${filtered.length} 件表示`;
+
+                tbody.innerHTML = filtered
+                    .map(
+                        (p) => `
+    <tr>
+      <td class="osusume-cell">${osusumeCell(p)}</td>
+      <td class="name-cell">
+        <a href="${p.url}" target="_blank">${p.name}</a>
+        ${p.note ? `<div class="note">${p.note}</div>` : ""}
+      </td>
+      <td class="${monthlyClass(p.monthly)}">${fmt(p.monthly)}</td>
+      <td>${p.chiku_label.replace(/（\d{4}年）/, "")}</td>
+      <td>${p.madori}</td>
+      <td>${p.menseki}㎡</td>
+      <td>${p.floor_label}</td>
+      <td>${p.kouzou}</td>
+      <td>${badge(p.ac, "AC", "－", "badge-ac", "badge-no")}</td>
+      <td>${badge(p.pet, "相談可", "－", "badge-ok", "badge-no")}</td>
+      <td>${p.nyukyo === "即" ? `<span class="badge badge-now">即</span>` : p.nyukyo}</td>
+      <td title="${p.address}">約${p.distance}km</td>
+      <td>${p.shoki_label}</td>
+      <td>${badge(p.trunk, "あり", "－", "badge-ok", "badge-no")}</td>
+      <td><input type="number" class="score-input" min="1" max="10" value="${scores[p.name] ?? ""}" placeholder="－" onchange="saveScore('${p.name}', this.value)"></td>
+      <td class="memo-cell"><input type="text" class="memo-input" value="${(memos[p.name] ?? "").replace(/"/g, "&quot;")}" placeholder="メモ" onchange="saveMemo('${p.name}', this.value)"></td>
+    </tr>
+  `,
+                    )
+                    .join("");
+            }
+
+            function resetFilters() {
+                document.getElementById("filterAC").value = "";
+                document.getElementById("filterPet").value = "";
+                document.getElementById("filterKouzou").value = "";
+                render();
+            }
+
+            document.querySelectorAll("thead th[data-col]").forEach((th) => {
+                th.addEventListener("click", () => {
+                    const col = th.dataset.col;
+                    if (sortCol === col) {
+                        sortAsc = !sortAsc;
+                    } else {
+                        sortCol = col;
+                        sortAsc = true;
+                    }
+                    document.querySelectorAll("thead th").forEach((t) => t.classList.remove("asc", "desc"));
+                    th.classList.add(sortAsc ? "asc" : "desc");
+                    render();
+                });
+            });
+
+            ["filterAC", "filterPet", "filterKouzou"].forEach((id) => {
+                document.getElementById(id).addEventListener("change", render);
+            });
+
+            // 初期表示（総合おすすめ順）
+            const osusumeTh = document.querySelector(`th[data-col="osusume"]`);
+            osusumeTh.classList.add("asc");
+            render();
+        </script>
+    </body>
+</html>

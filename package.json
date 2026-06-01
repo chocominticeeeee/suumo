@@ -1,0 +1,8 @@
+{
+  "name": "suumo",
+  "private": true,
+  "scripts": {
+    "dev": "bun run scripts/dev.ts",
+    "deploy": "bun run scripts/deploy.ts"
+  }
+}
